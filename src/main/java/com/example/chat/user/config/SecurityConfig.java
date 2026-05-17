@@ -22,21 +22,17 @@ public class SecurityConfig {
         http
             .csrf(csrf -> csrf.disable())
             .authorizeHttpRequests(auth -> auth
-
-                // ✅ PUBLIC ENDPOINTS (ONLY LOGIN + SWAGGER)
                 .requestMatchers(
                         "/api/auth/**",
+                         "/api/status/**", 
                          "/ws/**", 
                         "/swagger-ui/**",
                         "/v3/api-docs/**",
                         "/swagger-ui.html"
                 ).permitAll()
 
-                // 🔒 EVERYTHING ELSE NEEDS JWT
                 .anyRequest().authenticated()
             )
-
-            // 🔐 ADD JWT FILTER
             .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
