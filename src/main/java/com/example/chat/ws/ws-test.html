@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Chat App</title>
+
+    <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
+
+    <style>
+        body { font-family: Arial; padding: 20px; }
+        #users, #chat { border: 1px solid #ccc; padding: 10px; height: 150px; overflow: auto; }
+    </style>
+</head>
+
+<body>
+
+<h2>Chat System</h2>
+
+<input id="email" placeholder="Your email">
+<button onclick="connect()">Connect</button>
+
+<h3>Online Users</h3>
+<div id="users"></div>
+
+<h3>Chat</h3>
+<input id="receiver" placeholder="Receiver email">
+<input id="msg" placeholder="Message">
+<button onclick="send()">Send</button>
+
+<div id="chat"></div>
+
+<script>
+
+let stompClient;
+
+function connect() {
+
+    const email = document.getElementById("email").value;
+
+    const socket = new SockJS("http://localhost:8080/ws");
+    stompClient = Stomp.over(socket);
+
+    stompClient.connect({ email }, function () {
+
+        stompClient.subscribe("/topic/online-users", function (msg) {
+            const users = JSON.parse(msg.body);
+            document.getElementById("users").innerHTML =
+                users.map(u => `<div>🟢 ${u}</div>`).join("");
+        });
+
+        stompClient.subscribe("/user/queue/messages", function (msg) {
+            const m = JSON.parse(msg.body);
+            document.getElementById("chat").innerHTML +=
+                `<div><b>${m.sender}:</b> ${m.content}</div>`;
+        });
+
+    });
+}
+
+function send() {
+
+    const sender = document.getElementById("email").value;
+    const receiver = document.getElementById("receiver").value;
+    const content = document.getElementById("msg").value;
+
+    stompClient.send("/app/chat.private", {}, JSON.stringify({
+        sender,
+        receiver,
+        content
+    }));
+}
+
+</script>
+
+</body>
+</html>
